@@ -80,3 +80,5 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^
 asyncio.exceptions.CancelledError
 ```
+
+It's notable that the CancelledError raised 7 seconds after activity start and 6 seconds after shutdown() is called despite the activity start-to-close timeout being set to 2 seconds and the graceful shutdown timeout being set to 10 seconds.
