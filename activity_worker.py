@@ -1,28 +1,36 @@
 import argparse
 import asyncio
+import logging
+import time
 from datetime import timedelta
 from temporalio.client import Client
 from temporalio.worker import Worker
 from workflows import simple_activity
 
+# Configure logging with timestamp format
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s.%(msecs)03d - %(message)s',
+    datefmt='%H:%M:%S'
+)
 
-async def main(interval: float):
+
+async def main(interval: float, graceful_shutdown_timeout: float):
     client = await Client.connect("localhost:7233")
 
     restart_count = 0
     while True:
         restart_count += 1
-        print(
-            f"\n[Restart #{restart_count}] Starting activity worker (max 1 concurrent activity, restart interval: {interval}s)"
-        )
 
         worker = Worker(
             client,
             task_queue="activities",
             activities=[simple_activity],
             max_concurrent_activities=1,
-            graceful_shutdown_timeout=timedelta(seconds=10),
+            graceful_shutdown_timeout=timedelta(seconds=graceful_shutdown_timeout),
         )
+
+        logging.info(f"[Restart #{restart_count}] Worker starting (max 1 concurrent activity, restart interval: {interval}s, graceful timeout: {graceful_shutdown_timeout}s)")
 
         # Run worker in background
         run_task = asyncio.create_task(worker.run())
@@ -32,17 +40,19 @@ async def main(interval: float):
             await asyncio.sleep(interval)
 
             # Initiate graceful shutdown
-            print(
-                f"[Restart #{restart_count}] Shutting down worker gracefully (timeout: 10s)..."
-            )
+            logging.info(f"[Restart #{restart_count}] Worker shutdown() called")
+            shutdown_start = time.time()
 
             await worker.shutdown()
+
+            shutdown_duration = time.time() - shutdown_start
+            logging.info(f"[Restart #{restart_count}] Worker shutdown() returned (took {shutdown_duration:.3f}s)")
+
             await run_task
+            logging.info(f"[Restart #{restart_count}] Worker done (run() returned)")
 
         except Exception as e:
-            print(f"[Restart #{restart_count}] Error during shutdown: {e}")
-
-        print(f"[Restart #{restart_count}] Worker shutdown complete")
+            logging.error(f"[Restart #{restart_count}] Error during shutdown: {e}")
 
 
 if __name__ == "__main__":
@@ -56,6 +66,12 @@ if __name__ == "__main__":
         default=1.0,
         help="Shutdown interval in seconds (default: 1.0)",
     )
+    parser.add_argument(
+        "--graceful-shutdown-timeout",
+        type=float,
+        default=10.0,
+        help="Graceful shutdown timeout in seconds (default: 10.0)",
+    )
     args = parser.parse_args()
 
-    asyncio.run(main(args.interval))
+    asyncio.run(main(args.interval, args.graceful_shutdown_timeout))
