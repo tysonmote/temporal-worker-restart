@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -26,6 +27,7 @@ async def main(interval: float, graceful_shutdown_timeout: float):
             client,
             task_queue="activities",
             activities=[simple_activity],
+            activity_executor=ThreadPoolExecutor(max_workers=1),
             max_concurrent_activities=1,
             graceful_shutdown_timeout=timedelta(seconds=graceful_shutdown_timeout),
         )

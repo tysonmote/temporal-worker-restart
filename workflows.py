@@ -1,5 +1,5 @@
-import asyncio
 import logging
+import time
 from datetime import datetime, timedelta
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
@@ -13,7 +13,7 @@ logging.basicConfig(
 
 
 @activity.defn
-async def simple_activity(sleep_seconds: float) -> str:
+def simple_activity(sleep_seconds: float) -> str:
     """Simple activity that sleeps for a configurable duration."""
     activity_info = activity.info()
     activity_id = activity_info.activity_id
@@ -21,7 +21,7 @@ async def simple_activity(sleep_seconds: float) -> str:
     logging.info(f"[{activity_id}] Activity start (sleep: {sleep_seconds}s)")
 
     try:
-        await asyncio.sleep(sleep_seconds)
+        time.sleep(sleep_seconds)
         logging.info(f"[{activity_id}] Activity success")
         return f"Activity completed after {sleep_seconds}s"
     except Exception as e:
