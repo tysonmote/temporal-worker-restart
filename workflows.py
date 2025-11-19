@@ -3,7 +3,7 @@ import time
 from datetime import timedelta
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
-from heartbeat import heartbeat_in_thread
+from heartbeat import heartbeat_in_thread, async_heartbeat
 
 # Configure logging with timestamp format
 logging.basicConfig(
@@ -14,7 +14,7 @@ logging.basicConfig(
 
 
 @activity.defn
-@heartbeat_in_thread
+@async_heartbeat
 def simple_activity(sleep_seconds: float) -> str:
     """Simple activity that sleeps for a configurable duration."""
     activity_info = activity.info()
@@ -27,7 +27,7 @@ def simple_activity(sleep_seconds: float) -> str:
 
     try:
         time.sleep(sleep_seconds)
-        logging.info(f"[{activity_id}] Activity success")
+        logging.info(f"[{activity_id}] Activity success after {sleep_seconds}s")
         return f"Activity completed after {sleep_seconds}s"
     except Exception as e:
         logging.error(f"[{activity_id}] Activity exception: {e}")

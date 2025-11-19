@@ -70,6 +70,10 @@ async def main(interval: float, graceful_shutdown_timeout: float):
             await run_task
             logging.info(f"[Restart #{restart_count}] Worker done (run() returned)")
 
+        except asyncio.CancelledError:
+            logging.info(
+                f"[Restart #{restart_count}] Worker cancelled during shutdown (expected)"
+            )
         except Exception as e:
             logging.error(f"[Restart #{restart_count}] Error during shutdown: {e}")
 
