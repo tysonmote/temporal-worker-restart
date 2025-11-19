@@ -1,7 +1,10 @@
 import argparse
 import asyncio
 import logging
+import signal
+import sys
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from temporalio.client import Client
@@ -11,9 +14,19 @@ from workflows import simple_activity
 # Configure logging with timestamp format
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s.%(msecs)03d - %(message)s',
-    datefmt='%H:%M:%S'
+    format="%(asctime)s.%(msecs)03d - %(message)s",
+    datefmt="%H:%M:%S",
 )
+
+
+def sigint_handler(signum, frame):
+    """Handle SIGINT by printing all thread stacks and exiting."""
+    logging.info("SIGINT received, printing all thread stacks:")
+    for thread_id, thread_frame in sys._current_frames().items():
+        print("Stack for thread {}".format(thread_id))
+        traceback.print_stack(thread_frame)
+        print("")
+    sys.exit(0)
 
 
 async def main(interval: float, graceful_shutdown_timeout: float):
@@ -32,7 +45,9 @@ async def main(interval: float, graceful_shutdown_timeout: float):
             graceful_shutdown_timeout=timedelta(seconds=graceful_shutdown_timeout),
         )
 
-        logging.info(f"[Restart #{restart_count}] Worker starting (max 1 concurrent activity, restart interval: {interval}s, graceful timeout: {graceful_shutdown_timeout}s)")
+        logging.info(
+            f"[Restart #{restart_count}] Worker starting (max 1 concurrent activity, restart interval: {interval}s, graceful timeout: {graceful_shutdown_timeout}s)"
+        )
 
         # Run worker in background
         run_task = asyncio.create_task(worker.run())
@@ -48,7 +63,9 @@ async def main(interval: float, graceful_shutdown_timeout: float):
             await worker.shutdown()
 
             shutdown_duration = time.time() - shutdown_start
-            logging.info(f"[Restart #{restart_count}] Worker shutdown() returned (took {shutdown_duration:.3f}s)")
+            logging.info(
+                f"[Restart #{restart_count}] Worker shutdown() returned (took {shutdown_duration:.3f}s)"
+            )
 
             await run_task
             logging.info(f"[Restart #{restart_count}] Worker done (run() returned)")
@@ -75,5 +92,7 @@ if __name__ == "__main__":
         help="Graceful shutdown timeout in seconds (default: 10.0)",
     )
     args = parser.parse_args()
+
+    signal.signal(signal.SIGINT, sigint_handler)
 
     asyncio.run(main(args.interval, args.graceful_shutdown_timeout))
