@@ -82,3 +82,19 @@ asyncio.exceptions.CancelledError
 ```
 
 It's notable that the CancelledError raised 7 seconds after activity start and 6 seconds after shutdown() is called despite the activity start-to-close timeout being set to 2 seconds and the graceful shutdown timeout being set to 10 seconds.
+
+If I drop the graceful shutdown timeout to 5 seconds but leave the other settings the same, the activity worker doesn't hang:
+
+```bash
+python activity_worker.py --graceful-shutdown-timeout 10
+
+16:13:44.617 - [Restart #1] Worker starting (max 1 concurrent activity, restart interval: 1.0s, graceful timeout: 5.0s)
+16:13:44.630 - [1] Activity start (sleep: 30.0s)
+16:13:45.618 - [Restart #1] Worker shutdown() called
+16:13:45.619 - Beginning worker shutdown, will wait 0:00:05 before cancelling activities
+2025-11-19T00:13:50.629078Z  WARN temporal_sdk_core::worker::activities: Activity not found on completion. This may happen if the activity has already been cancelled but completed anyway. task_token=TaskToken(...) details=Status { code: NotFound, message: "workflow execution already completed", details: b"\x08\x05\x12$workflow execution already completed\x1aB\n@type.googleapis.com/temporal.api.errordetails.v1.NotFoundFailure", metadata: MetadataMap { headers: {"content-type": "application/grpc"} }, source: None }
+16:13:50.633 - [Restart #1] Worker shutdown() returned (took 5.015s)
+16:13:50.633 - [Restart #1] Worker done (run() returned)
+```
+
+(But the `NotFound` error is still concerning.)
