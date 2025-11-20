@@ -55,7 +55,9 @@ python activity_worker.py --graceful-shutdown-timeout 10
 Tests:
 
 ```bash
-# If activity duration > graceful shutdown timeout, shutdown hangs:
-GOOD   python start_workflows.py --activity-timeout 5 --activity-sleep 8 2
-BAD    python start_workflows.py --activity-timeout 5 --activity-sleep 11 2
+# If activity duration > graceful shutdown timeout AND start-to-close timeout is
+# hit, shutdown hangs forever:
+GOOD   python start_workflows.py --activity-timeout 5 --activity-sleep 8 1
+GOOD   python start_workflows.py --activity-timeout 15 --activity-sleep 11 1
+BAD    python start_workflows.py --activity-timeout 5 --activity-sleep 11 1
 ```
