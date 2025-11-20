@@ -41,3 +41,21 @@ python start_workflows.py 500
 - `activity_worker.py` - Chaos worker for processing activities (restarts every N seconds)
 - `start_workflows.py` - Script to start N workflows (default: 100)
 - `requirements.txt` - Python dependencies (temporalio SDK)
+
+## Issues
+
+### Worker shutdown hangs
+
+All tests done with 10s graceful shutdown timeout:
+
+```bash
+python activity_worker.py --graceful-shutdown-timeout 10
+```
+
+Tests:
+
+```bash
+# If activity duration > graceful shutdown timeout, shutdown hangs:
+GOOD   python start_workflows.py --activity-timeout 5 --activity-sleep 8 2
+BAD    python start_workflows.py --activity-timeout 5 --activity-sleep 11 2
+```
