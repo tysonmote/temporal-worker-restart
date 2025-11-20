@@ -1,6 +1,7 @@
 import logging
 import time
 from datetime import timedelta
+from heartbeat import heartbeat_in_thread
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
 
@@ -13,6 +14,7 @@ logging.basicConfig(
 
 
 @activity.defn
+@heartbeat_in_thread
 def simple_activity(sleep_seconds: float) -> str:
     """Simple activity that sleeps for a configurable duration."""
     activity_info = activity.info()
