@@ -46,6 +46,10 @@ python start_workflows.py 500
 
 ### Worker shutdown hangs
 
+If the activity throws `temporalio.exceptions.CancelledError: Cancelled` due to
+a start-to-close timeout or heartbeat timeout during a graceful shutdown, the
+worker shutdown will hang indefinitely.
+
 All tests done with 10s graceful shutdown timeout:
 
 ```bash
@@ -60,4 +64,9 @@ Tests:
 GOOD   python start_workflows.py --activity-timeout 5 --activity-sleep 8 1
 GOOD   python start_workflows.py --activity-timeout 15 --activity-sleep 11 1
 BAD    python start_workflows.py --activity-timeout 5 --activity-sleep 11 1
+
+# If heartbeats are enabled and activity duration > start-to-close timeout,
+# shutdown hangs forever:
+GOOD   python start_workflows.py --activity-timeout 9 --activity-sleep 8 --activity-heartbeat-timeout 2 1
+BAD    python start_workflows.py --activity-timeout 7 --activity-sleep 8 --activity-heartbeat-timeout 2 1
 ```
