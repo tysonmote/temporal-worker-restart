@@ -48,8 +48,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--activity-timeout",
         type=float,
-        default=5.0,
-        help="Activity start-to-close timeout in seconds (default: 5.0)",
+        default=10.0,
+        help="Activity start-to-close timeout in seconds (default: 10.0)",
     )
     parser.add_argument(
         "--activity-sleep",
