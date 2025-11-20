@@ -8,11 +8,17 @@ async def main(
     count: int,
     activity_timeout_seconds: float,
     activity_sleep_seconds: float,
+    activity_heartbeat_timeout_seconds: float | None,
 ):
     client = await Client.connect("localhost:7233")
 
+    heartbeat_info = (
+        f", heartbeat timeout: {activity_heartbeat_timeout_seconds}s"
+        if activity_heartbeat_timeout_seconds
+        else ""
+    )
     print(
-        f"Starting {count} workflows (activity timeout: {activity_timeout_seconds}s, activity sleep: {activity_sleep_seconds}s)..."
+        f"Starting {count} workflows (activity timeout: {activity_timeout_seconds}s, activity sleep: {activity_sleep_seconds}s{heartbeat_info})..."
     )
 
     tasks = []
@@ -23,6 +29,7 @@ async def main(
             args=(
                 activity_timeout_seconds,
                 activity_sleep_seconds,
+                activity_heartbeat_timeout_seconds,
             ),
             id=workflow_id,
             task_queue="workflows",
@@ -57,6 +64,12 @@ if __name__ == "__main__":
         default=0.1,
         help="Activity sleep duration in seconds (default: 0.1)",
     )
+    parser.add_argument(
+        "--activity-heartbeat-timeout",
+        type=float,
+        default=None,
+        help="Activity heartbeat timeout in seconds (default: None)",
+    )
     args = parser.parse_args()
 
     asyncio.run(
@@ -64,5 +77,6 @@ if __name__ == "__main__":
             args.count,
             args.activity_timeout,
             args.activity_sleep,
+            args.activity_heartbeat_timeout,
         )
     )
