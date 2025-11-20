@@ -32,6 +32,7 @@ services:
       - temporal
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+      - TEMPORAL_CORS_ORIGINS=http://localhost:8080
+      - TEMPORAL_CSRF_COOKIE_INSECURE=true
     ports:
       - "8080:8080"
