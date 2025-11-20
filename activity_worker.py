@@ -92,8 +92,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--graceful-shutdown-timeout",
         type=float,
-        default=10.0,
-        help="Graceful shutdown timeout in seconds (default: 10.0)",
+        default=5.0,
+        help="Graceful shutdown timeout in seconds (default: 5.0)",
     )
     args = parser.parse_args()
 
