@@ -44,7 +44,10 @@ python start_workflows.py 500
 
 ## Issues
 
-### Worker shutdown hangs
+### Worker shutdown hangs in Python 3.11.8
+
+This issue affects Python 3.11.8 specifically but appears to be resolved in
+Python 3.11.9 and later.
 
 If the activity throws `temporalio.exceptions.CancelledError: Cancelled` due to
 a start-to-close timeout or heartbeat timeout during a graceful shutdown, the
