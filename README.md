@@ -46,6 +46,8 @@ python start_workflows.py 500
 
 ### Worker shutdown hangs in Python 3.11.8
 
+**NOTE:** Fixed in temporalio >= 1.18.1
+
 This issue affects Python 3.11.8 specifically but appears to be resolved in
 Python 3.11.9 and later.
 
