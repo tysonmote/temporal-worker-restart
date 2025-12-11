@@ -1,7 +1,6 @@
 import logging
 import time
 from datetime import timedelta
-from heartbeat import heartbeat_in_thread
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
 
@@ -14,7 +13,6 @@ logging.basicConfig(
 
 
 @activity.defn
-@heartbeat_in_thread
 def simple_activity(sleep_seconds: float) -> str:
     """Simple activity that sleeps for a configurable duration."""
     activity_info = activity.info()
@@ -24,13 +22,13 @@ def simple_activity(sleep_seconds: float) -> str:
     logging.info(f"[{activity_id}] Activity start (sleep: {sleep_seconds}s)")
 
     try:
-        elapsed = 0.0
-        while elapsed < sleep_seconds:
-            time.sleep(0.1)
-            elapsed = time.time() - activity_start
-        activity_duration = time.time() - activity_start
-        logging.info(f"[{activity_id}] Activity success after {activity_duration}s")
-        return f"Activity completed after {sleep_seconds}s"
+        if sleep_seconds > 0:
+            elapsed = 0.0
+            while elapsed < sleep_seconds:
+                time.sleep(0.1)
+                elapsed = time.time() - activity_start
+            activity_duration = time.time() - activity_start
+            logging.info(f"[{activity_id}] Activity success after {activity_duration}s")
     except Exception as e:
         activity_duration = time.time() - activity_start
         logging.error(
@@ -48,18 +46,12 @@ class SimpleWorkflow:
         self,
         activity_timeout_seconds: float,
         activity_sleep_seconds: float,
-        activity_heartbeat_timeout_seconds: float | None = None,
     ) -> str:
         activity_options = {
             "start_to_close_timeout": timedelta(seconds=activity_timeout_seconds),
             "task_queue": "activities",
             "retry_policy": RetryPolicy(maximum_attempts=1),
         }
-
-        if activity_heartbeat_timeout_seconds is not None:
-            activity_options["heartbeat_timeout"] = timedelta(
-                seconds=activity_heartbeat_timeout_seconds
-            )
 
         result = await workflow.execute_activity(
             simple_activity,

@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import multiprocessing
 import signal
 import sys
 import time
@@ -78,6 +79,19 @@ async def main(interval: float, graceful_shutdown_timeout: float):
             logging.error(f"[Restart #{restart_count}] Error during shutdown: {e}")
 
 
+def run_worker_process(worker_id: int, interval: float, graceful_shutdown_timeout: float):
+    """Entry point for a worker sub-process."""
+    # Reconfigure logging to include worker ID
+    logging.basicConfig(
+        level=logging.INFO,
+        format=f"%(asctime)s.%(msecs)03d - [Worker {worker_id}] %(message)s",
+        datefmt="%H:%M:%S",
+        force=True,
+    )
+    signal.signal(signal.SIGINT, sigint_handler)
+    asyncio.run(main(interval, graceful_shutdown_timeout))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run Temporal activity worker with periodic restarts"
@@ -95,8 +109,34 @@ if __name__ == "__main__":
         default=5.0,
         help="Graceful shutdown timeout in seconds (default: 5.0)",
     )
+    parser.add_argument(
+        "-n",
+        type=int,
+        default=1,
+        help="Number of workers to run in sub-processes (default: 1)",
+    )
     args = parser.parse_args()
 
-    signal.signal(signal.SIGINT, sigint_handler)
+    if args.n <= 1:
+        signal.signal(signal.SIGINT, sigint_handler)
+        asyncio.run(main(args.interval, args.graceful_shutdown_timeout))
+    else:
+        processes = []
+        for i in range(args.n):
+            p = multiprocessing.Process(
+                target=run_worker_process,
+                args=(i + 1, args.interval, args.graceful_shutdown_timeout),
+            )
+            p.start()
+            processes.append(p)
+            logging.info(f"Started worker process {i + 1} (PID: {p.pid})")
 
-    asyncio.run(main(args.interval, args.graceful_shutdown_timeout))
+        try:
+            for p in processes:
+                p.join()
+        except KeyboardInterrupt:
+            logging.info("Terminating all worker processes...")
+            for p in processes:
+                p.terminate()
+            for p in processes:
+                p.join()
