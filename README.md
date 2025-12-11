@@ -26,6 +26,9 @@ python workflow_worker.py
 ```bash
 # Specify the restart interval in seconds (e.g., 1.0 second)
 python activity_worker.py 1.0
+
+# Optionally run N workers
+python activity_worker.py -n 10 1.0
 ```
 
 ```bash
@@ -43,6 +46,43 @@ python start_workflows.py 500
 - `requirements.txt` - Python dependencies (temporalio SDK)
 
 ## Issues
+
+### Lost activity tasks on worker restart
+
+```bash
+# Start 1,000 workflows
+python start_workflows.py --activity_sleep 0 1000
+
+# Start workflow worker
+python workflow_worker.py
+
+# Run 1 activity worker that restarts every 0.5 seconds
+python activity_worker.py 0.5
+```
+
+Different restart intervals will yield different activity task loss rates:
+
+| Restart Interval (s) | Lost Activities (%) |
+|----------------------|---------------------|
+| 0.1                  | 2.6%                |
+| 0.25                 | 1.3%                |
+| 0.5                  | 1.0%                |
+| 1.0                  | 0.8%                |
+| 2.0                  | 0.1%                |
+| 4.0                  | 0.1%                |
+| 8.0                  | 0.1%                |
+
+Running 10 workers instead of 1 yields similar loss rates:
+
+| Restart Interval (s) | Lost Activities (%) |
+|----------------------|---------------------|
+| 0.1                  | 4.2%                |
+| 0.25                 | 1.5%                |
+| 0.5                  | 0.9%                |
+| 1.0                  | 0.6%                |
+| 2.0                  | 0.1%                |
+| 4.0                  | 0.2%                |
+| 8.0                  | 0.1%                |
 
 ### Worker shutdown hangs in Python 3.11.8
 
