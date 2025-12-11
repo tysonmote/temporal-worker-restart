@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import multiprocessing
+import random
 import signal
 import sys
 import time
@@ -54,8 +55,9 @@ async def main(interval: float, graceful_shutdown_timeout: float):
         run_task = asyncio.create_task(worker.run())
 
         try:
-            # Wait before shutting down
-            await asyncio.sleep(interval)
+            # Wait before shutting down (with ±10% jitter to spread out worker restarts)
+            jittered_interval = interval * random.uniform(0.9, 1.1)
+            await asyncio.sleep(jittered_interval)
 
             # Initiate graceful shutdown
             logging.info(f"[Restart #{restart_count}] Worker shutdown() called")

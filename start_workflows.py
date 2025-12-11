@@ -64,6 +64,5 @@ if __name__ == "__main__":
             args.count,
             args.activity_timeout,
             args.activity_sleep,
-            args.activity_heartbeat_timeout,
         )
     )

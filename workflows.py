@@ -19,8 +19,6 @@ def simple_activity(sleep_seconds: float) -> str:
     activity_id = activity_info.activity_id
     activity_start = time.time()
 
-    logging.info(f"[{activity_id}] Activity start (sleep: {sleep_seconds}s)")
-
     try:
         if sleep_seconds > 0:
             elapsed = 0.0
